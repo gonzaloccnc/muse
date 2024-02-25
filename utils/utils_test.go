@@ -22,6 +22,7 @@ func TestValidatePaths(t *testing.T) {
 		"c:\\as\\spe\\sa",
 		"c:route",
 		"/a-\\k",
+		"/{path",
 	}
 
 	for _, path := range paths {

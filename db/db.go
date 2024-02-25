@@ -73,6 +73,18 @@ func getJsonFile(path string) AliasesJSON {
 	return aliasesJSON
 }
 
+func GetAlias(alias string) *ItemJSON {
+	jsonFile := getJsonFile(DB)
+
+	for _, al := range jsonFile.Aliases {
+		if al.Alias == alias {
+			return &al
+		}
+	}
+
+	return nil
+}
+
 func isDuplicateAlias(alias string, aliases AliasesJSON) bool {
 	for _, val := range aliases.Aliases {
 		if val.Alias == alias {
