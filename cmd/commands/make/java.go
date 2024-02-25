@@ -7,13 +7,16 @@ import (
 	"muse/utils/spring"
 	"net/url"
 	"os"
+	"path/filepath"
 	"reflect"
 	"strings"
 
+	"github.com/AlecAivazis/survey/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/AlecAivazis/survey/v2"
+	"github.com/erikgeiser/promptkit/selection"
+	"github.com/erikgeiser/promptkit/textinput"
 )
 
 var mapType = map[string]string{
@@ -33,16 +36,21 @@ var JavaCommand = &cobra.Command{
 		json.Unmarshal(responseData, &metadata)
 
 		data := springInitializr(metadata)
-		qs := generateQueryString(data)
+		qs := structToQueryString(data)
 
 		url := "https://start.spring.io/starter.zip?" + qs
 
 		zip := utils.Fetch(url)
 
-		if err := os.WriteFile("data.zip", zip, 0777); err != nil {
+		outDir := filepath.Join(FinalPath, Name)
+		utils.CreateDir(outDir)
+
+		outZipDir := filepath.Join(FinalPath, Name, Name+".zip")
+		if err := os.WriteFile(outZipDir, zip, 0777); err != nil {
 			logrus.Fatalln(err)
 		}
-		// TODO this is done but catch errors
+
+		logrus.Println("project create successful: ", outZipDir)
 	},
 }
 
@@ -54,16 +62,21 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	javaVersions := getSpringVersions(metadata.JavaVersion.Values)
 	projects := getTypeDepencies(metadata.Dependencies.Values)
 
-	manager := mapType[selectOne("Select the dependecies manager", dependenciesManager, 0)]
-	language := selectOne("Select the dependecies manager", languages, 0)
-	bootVersion := selectOne("Select the dependecies manager", bootVersions, 0)
-	groupId := input("Group Id: ...", "demo")
+	// checkbox.Checkbox("Select the dependecies manager", []list.Item{
+	// 	checkbox.Item("Hlo"),
+	// 	checkbox.Item("exit"),
+	// })
+
+	manager := mapType[selectOne("Select the dependecies manager", dependenciesManager)]
+	language := selectOne("Select the dependecies manager", languages)
+	bootVersion := selectOne("Select the dependecies manager", bootVersions)
+	groupId := input("Group Id: ...", "com.example")
 	artifactId := input("Artifact Id: ...", "demo")
-	name := input("Name: ...", "demo")
+	name := input("Name: ...", artifactId)
 	description := input("Description: ...", "Demo project for Spring Boot")
-	packageName := input("Package name: ...", "com.example.demo")
-	packaging := selectOne("Packaging", packagings, 0)
-	javaVersion := selectOne("Java version: ...", javaVersions, 0)
+	packageName := input("Package name: ...", groupId+"."+artifactId)
+	packaging := selectOne("Packaging", packagings)
+	javaVersion := selectOne("Java version: ...", javaVersions)
 
 	dependencies := chooseDependencies(projects, metadata.Dependencies.Values)
 
@@ -85,37 +98,42 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 }
 
 func multiSelect(label string, opts []string) []string {
-	res := []string{}
+	// migrate survey is deprecated
+
+	choises := []string{}
 	prompt := &survey.MultiSelect{
 		Message: label,
 		Options: opts,
 	}
-	survey.AskOne(prompt, &res)
 
-	return res
+	survey.AskOne(prompt, &choises)
+
+	return choises
 }
 
-func selectOne(label string, opts []string, pages int) string {
-	var res string
-	prompt := &survey.Select{
-		Message:  label,
-		Options:  opts,
-		PageSize: pages,
-	}
-	survey.AskOne(prompt, &res)
+func selectOne(label string, opts []string) string {
+	sp := selection.New(label, opts)
+	sp.PageSize = 3
 
-	return res
+	choise, err := sp.RunPrompt()
+
+	if err != nil {
+		logrus.Fatalln(err)
+	}
+
+	return choise
 }
 
 func input(label string, defaultmg string) string {
-	var res string
-	promp := &survey.Input{
-		Message: label,
-		Default: defaultmg,
-	}
-	survey.AskOne(promp, &res)
+	input := textinput.New(label)
+	input.Placeholder = defaultmg
+	value, err := input.RunPrompt()
 
-	return res
+	if err != nil {
+		logrus.Fatalln(err)
+	}
+
+	return value
 }
 
 func getSpringVersions(structs []spring.BootVersionValue) []string {
@@ -162,8 +180,9 @@ func chooseDependencies(projects []string, projectsMetadata []spring.Dependencie
 
 	appendProjects := append(projects, "Exit")
 	mapDeps := convertToMap(projectsMetadata)
+
 	for {
-		project := selectOne("Choose an project for add a dependency", appendProjects, 8)
+		project := selectOne("Choose an project for add a dependency", appendProjects)
 
 		for _, v := range projectsMetadata {
 			if v.Name == project {
@@ -179,8 +198,7 @@ func chooseDependencies(projects []string, projectsMetadata []spring.Dependencie
 		}
 	}
 
-	var ids = make([]string, len(dependencies))
-
+	var ids []string
 	for _, v := range dependencies {
 		ids = append(ids, mapDeps[v])
 	}
@@ -193,7 +211,7 @@ func deleteDuplicateAndSplit(arr []string) string {
 	return strings.Join(arr, ",")
 }
 
-func generateQueryString(structData interface{}) string {
+func structToQueryString(structData interface{}) string {
 	values := url.Values{}
 
 	structValues := reflect.ValueOf(structData)
@@ -206,7 +224,7 @@ func generateQueryString(structData interface{}) string {
 		fieldValue := strings.ToLower(structValues.Field(i).String())
 
 		if fieldName == "dependencies" {
-			break
+			values.Set(fieldName, fieldValue)
 		}
 
 		values.Set(fieldName, fieldValue)

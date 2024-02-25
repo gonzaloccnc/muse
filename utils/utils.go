@@ -1,11 +1,8 @@
 package utils
 
 import (
-	"archive/zip"
-	"bytes"
 	"fmt"
 	"io"
-	"log"
 	"net/http"
 	"os"
 	"path/filepath"
@@ -53,45 +50,26 @@ func Fetch(url string) []byte {
 	defer response.Body.Close()
 
 	responseData, err := io.ReadAll(response.Body)
+
 	if err != nil {
 		logrus.Fatalln(err)
+	}
+
+	if response.StatusCode != 200 {
+		logrus.Fatalf(
+			"an error occurred while get the data, code: %d\nBody: %s\n",
+			response.StatusCode,
+			string(responseData),
+		)
 	}
 
 	return responseData
 }
 
-func ReadZip(body []byte) {
-	zipReader, err := zip.NewReader(bytes.NewReader(body), int64(len(body)))
-	if err != nil {
-		log.Fatal(err)
-	}
-
-	// Read all the files from zip archive
-	for _, zipFile := range zipReader.File {
-		fmt.Println("Reading file:", zipFile.Name)
-		unzippedFileBytes := readZipFile(zipFile)
-		if err != nil {
-			log.Println(err)
-			continue
-		}
-
-		_ = unzippedFileBytes // this is unzipped file bytes
-	}
-}
-
-func readZipFile(zf *zip.File) []byte {
-
-	f, err := zf.Open()
-	if err != nil {
-		logrus.Fatalln(err)
-	}
-	defer f.Close()
-
-	fileBytes, err := io.ReadAll(f)
-
-	if err != nil {
+func CreateDir(path string) string {
+	if err := os.MkdirAll(path, 0777); err != nil {
 		logrus.Fatalln(err)
 	}
 
-	return fileBytes
+	return ""
 }
