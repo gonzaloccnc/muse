@@ -26,7 +26,7 @@ var (
 type model struct {
 	label      string
 	items      []string
-	choise     string
+	choice     string
 	paginator  paginator.Model
 	cursor     int
 	realCursor int
@@ -82,7 +82,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case "enter", " ":
-			m.choise = m.items[m.realCursor]
+			m.choice = m.items[m.realCursor]
 			return m, tea.Quit
 
 		}
@@ -136,11 +136,11 @@ func Run(label string, items []string, perPage int) string {
 	}
 
 	pgm := tea.NewProgram(&mo)
-	_, err := pgm.Run()
+	m, err := pgm.Run()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	return mo.choise
+	return m.(model).choice
 }

@@ -58,15 +58,15 @@ var JavaCommand = &cobra.Command{
 
 func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	dependenciesManager := []string{"Gradle - Groovy", "Gradle - Kotlin", "Maven"}
-	languages := []string{"Java", "Kotlin", "Grovy"}
+	languages := []string{"Java", "Kotlin", "Groovy"}
 	packagings := []string{"jar", "war"}
 	bootVersions := getSpringVersions(metadata.BootVersion.Values)
 	javaVersions := getSpringVersions(metadata.JavaVersion.Values)
-	projects := getTypeDepencies(metadata.Dependencies.Values)
+	projects := getTypeDependencies(metadata.Dependencies.Values)
 
 	manager := mapType[selectOne("Select the dependencies manager", dependenciesManager)]
-	language := selectOne("Select the dependecies manager", languages)
-	bootVersion := selectOne("Select the dependecies manager", bootVersions)
+	language := selectOne("Select the dependencies manager", languages)
+	bootVersion := selectOne("Select the dependencies manager", bootVersions)
 	groupId := input("Group Id: ...", "com.example")
 	artifactId := input("Artifact Id: ...", "demo")
 	name := input("Name: ...", artifactId)
@@ -94,7 +94,7 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	}
 }
 
-func choises(label string, opts []string) []string {
+func choices(label string, opts []string) []string {
 	return multiselect.Run(label, opts, 6)
 }
 
@@ -102,8 +102,8 @@ func selectOne(label string, opts []string) string {
 	return singleselect.Run(label, opts, 6)
 }
 
-func input(label string, defaultmg string) string {
-	return ti.Run(defaultmg, label)
+func input(label string, placeholder string) string {
+	return ti.Run(placeholder, label)
 }
 
 func getSpringVersions(structs []spring.BootVersionValue) []string {
@@ -115,7 +115,7 @@ func getSpringVersions(structs []spring.BootVersionValue) []string {
 	return strings
 }
 
-func getTypeDepencies(root []spring.DependenciesValue) []string {
+func getTypeDependencies(root []spring.DependenciesValue) []string {
 	strings := make([]string, len(root))
 	for i, v := range root {
 		strings[i] = v.Name
@@ -158,7 +158,7 @@ func chooseDependencies(projects []string, projectsMetadata []spring.Dependencie
 			if v.Name == project {
 				dependencies = append(
 					dependencies,
-					choises("Select dependency", getDependencies(v.Values))...,
+					choices("Select dependency", getDependencies(v.Values))...,
 				)
 			}
 		}

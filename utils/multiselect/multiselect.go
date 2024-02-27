@@ -22,14 +22,14 @@ var (
 	selectedItemStyle = lipgloss.NewStyle().
 				Foreground(lipgloss.Color("#0000FF"))
 
-	isBeOnChoises = lipgloss.NewStyle().
+	isBeOnChoices = lipgloss.NewStyle().
 			Foreground(lipgloss.Color("#fa0cc3"))
 )
 
 type model struct {
 	label      string
 	items      []string
-	choises    map[int]string
+	choices    map[int]string
 	paginator  paginator.Model
 	cursor     int
 	realCursor int
@@ -85,16 +85,15 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 			}
 
 		case " ":
-			_, ok := m.choises[m.realCursor]
+			_, ok := m.choices[m.realCursor]
 
 			if ok {
-				delete(m.choises, m.realCursor)
+				delete(m.choices, m.realCursor)
 			} else {
-				m.choises[m.realCursor] = m.items[m.realCursor]
+				m.choices[m.realCursor] = m.items[m.realCursor]
 			}
 
 		}
-
 	}
 
 	m.paginator, cmd = m.paginator.Update(msg)
@@ -108,10 +107,10 @@ func (m model) View() string {
 
 	start, end := m.paginator.GetSliceBounds(len(m.items))
 
-	index := (m.paginator.Page * m.paginator.PerPage)
+	index := m.paginator.Page * m.paginator.PerPage
+
 	for i, item := range m.items[start:end] {
 		var itemRender, checkedRender string
-
 		cursor := itemStyle.Render(" ")
 		checkedRender = itemStyle.Render("[ ]")
 		itemRender = itemStyle.Render(item)
@@ -122,9 +121,9 @@ func (m model) View() string {
 			checkedRender = selectedItemStyle.Render("[ ]")
 		}
 
-		if _, ok := m.choises[index+i]; ok {
-			itemRender = isBeOnChoises.Render(item)
-			checkedRender = isBeOnChoises.Render("[✔]")
+		if _, ok := m.choices[index+i]; ok {
+			itemRender = isBeOnChoices.Render(item)
+			checkedRender = isBeOnChoices.Render("[✔]")
 		}
 
 		str := fmt.Sprintf("%s %s %s\n", cursor, checkedRender, itemRender)
@@ -148,26 +147,26 @@ func Run(label string, items []string, perPage int) []string {
 	mo := model{
 		paginator: p,
 		items:     items,
-		choises:   make(map[int]string),
+		choices:   make(map[int]string),
 		label:     titleStyle.Render(label),
 	}
 
 	pgm := tea.NewProgram(&mo)
-	_, err := pgm.Run()
+	m, err := pgm.Run()
 
 	if err != nil {
 		log.Fatal(err)
 	}
 
-	mChoises := mo.choises
+	mChoices := m.(model).choices
 
-	choises := make([]string, len(mChoises))
+	choices := make([]string, len(mChoices))
 
 	idx := 0
-	for _, v := range mChoises {
-		choises[idx] = v
+	for _, v := range choices {
+		choices[idx] = v
 		idx++
 	}
 
-	return choises
+	return choices
 }
