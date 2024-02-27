@@ -46,3 +46,4 @@
 
 
 *CATCH ERRORS ON ALL COMANDS*
+*bug in utilities: multiple selection, single selection. when changing the cursor with right arrows, the cursor is not located at the start of the element*

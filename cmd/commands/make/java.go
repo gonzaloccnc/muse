@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"encoding/json"
 	"muse/utils"
-	"muse/utils/checkbox"
+
+	"muse/utils/multiselect"
+	"muse/utils/singleselect"
 	"muse/utils/spring"
 	"net/url"
 	"os"
@@ -12,12 +14,10 @@ import (
 	"reflect"
 	"strings"
 
-	"github.com/AlecAivazis/survey/v2"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 
-	"github.com/erikgeiser/promptkit/selection"
-	"github.com/erikgeiser/promptkit/textinput"
+	ti "muse/utils/textinput"
 )
 
 var mapType = map[string]string{
@@ -32,7 +32,6 @@ var JavaCommand = &cobra.Command{
 	Long:  "Create a project with java template. Only support for Spring framework",
 	Run: func(cmd *cobra.Command, args []string) {
 
-		checkbox.Checkbox()
 		responseData := utils.Fetch("https://start.spring.io/metadata/client")
 
 		var metadata spring.ResponseMetadata
@@ -65,7 +64,7 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	javaVersions := getSpringVersions(metadata.JavaVersion.Values)
 	projects := getTypeDepencies(metadata.Dependencies.Values)
 
-	manager := mapType[selectOne("Select the dependecies manager", dependenciesManager)]
+	manager := mapType[selectOne("Select the dependencies manager", dependenciesManager)]
 	language := selectOne("Select the dependecies manager", languages)
 	bootVersion := selectOne("Select the dependecies manager", bootVersions)
 	groupId := input("Group Id: ...", "com.example")
@@ -95,43 +94,16 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	}
 }
 
-func multiSelect(label string, opts []string) []string {
-	// migrate survey is deprecated
-
-	choises := []string{}
-	prompt := &survey.MultiSelect{
-		Message: label,
-		Options: opts,
-	}
-
-	survey.AskOne(prompt, &choises)
-
-	return choises
+func choises(label string, opts []string) []string {
+	return multiselect.Run(label, opts, 6)
 }
 
 func selectOne(label string, opts []string) string {
-	sp := selection.New(label, opts)
-	sp.PageSize = 3
-
-	choise, err := sp.RunPrompt()
-
-	if err != nil {
-		logrus.Fatalln(err)
-	}
-
-	return choise
+	return singleselect.Run(label, opts, 6)
 }
 
 func input(label string, defaultmg string) string {
-	input := textinput.New(label)
-	input.Placeholder = defaultmg
-	value, err := input.RunPrompt()
-
-	if err != nil {
-		logrus.Fatalln(err)
-	}
-
-	return value
+	return ti.Run(defaultmg, label)
 }
 
 func getSpringVersions(structs []spring.BootVersionValue) []string {
@@ -186,7 +158,7 @@ func chooseDependencies(projects []string, projectsMetadata []spring.Dependencie
 			if v.Name == project {
 				dependencies = append(
 					dependencies,
-					multiSelect("Select dependency", getDependencies(v.Values))...,
+					choises("Select dependency", getDependencies(v.Values))...,
 				)
 			}
 		}
