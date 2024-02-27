@@ -2,57 +2,60 @@ package checkbox
 
 import (
 	"fmt"
-	"io"
+	"log"
 	"strings"
 
-	"github.com/charmbracelet/bubbles/list"
-	tea "github.com/charmbracelet/bubbletea"
+	"github.com/charmbracelet/bubbles/paginator"
 	"github.com/charmbracelet/lipgloss"
 	"github.com/sirupsen/logrus"
+
+	tea "github.com/charmbracelet/bubbletea"
 )
 
-const listHeight = 14
-
-var (
-	titleStyle        = lipgloss.NewStyle().MarginLeft(2)
-	itemStyle         = lipgloss.NewStyle().PaddingLeft(4)
-	selectedItemStyle = lipgloss.NewStyle().PaddingLeft(2).Foreground(lipgloss.Color("170"))
-	paginationStyle   = list.DefaultStyles().PaginationStyle.PaddingLeft(4)
-	helpStyle         = list.DefaultStyles().HelpStyle.PaddingLeft(4).PaddingBottom(1)
-	quitTextStyle     = lipgloss.NewStyle().Margin(1, 0, 2, 4)
-)
-
-type Item string
-
-func (i Item) FilterValue() string { return "" }
-
-type itemDelegate struct{}
-
-func (d itemDelegate) Height() int                             { return 1 }
-func (d itemDelegate) Spacing() int                            { return 0 }
-func (d itemDelegate) Update(_ tea.Msg, _ *list.Model) tea.Cmd { return nil }
-func (d itemDelegate) Render(w io.Writer, m list.Model, index int, listItem list.Item) {
-	i, ok := listItem.(Item)
-	if !ok {
-		return
+func newModel() model {
+	var items = []string{
+		"Item 1",
+		"Item 2",
+		"Item 3",
+		"Item 4",
+		"Item 5",
+		"Item 6",
+		"Item 7",
+		"Item 8",
+		"Item 9",
+		"Item 10",
+		"Item 11",
+		"Item 12",
+		"Item 13",
+		"Item 14",
+		"Item 15",
+		"Item 16",
+		"Item 17",
+		"Item 18",
+		"Item 19",
 	}
 
-	str := fmt.Sprintf("%d. %s", index+1, i)
+	p := paginator.New()
+	p.Type = paginator.Dots
 
-	fn := itemStyle.Render
-	if index == m.Index() {
-		fn = func(s ...string) string {
-			return selectedItemStyle.Render("> " + strings.Join(s, " "))
-		}
+	p.PerPage = 4
+	p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("•")
+	p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("•")
+	p.SetTotalPages(len(items))
+
+	return model{
+		paginator: p,
+		items:     items,
+		choises:   make(map[int]string),
 	}
-
-	fmt.Fprint(w, fn(str))
 }
 
 type model struct {
-	list     list.Model
-	choice   string
-	quitting bool
+	items      []string
+	choises    map[int]string
+	paginator  paginator.Model
+	cursor     int
+	realCursor int
 }
 
 func (m model) Init() tea.Cmd {
@@ -60,55 +63,123 @@ func (m model) Init() tea.Cmd {
 }
 
 func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
-	switch msg := msg.(type) {
-	case tea.WindowSizeMsg:
-		m.list.SetWidth(msg.Width)
-		return m, nil
+	var cmd tea.Cmd
+	start, end := m.paginator.GetSliceBounds(len(m.items))
 
+	switch msg := msg.(type) {
 	case tea.KeyMsg:
-		switch keypress := msg.String(); keypress {
-		case "q", "ctrl+c":
-			m.quitting = true
+		switch msg.String() {
+		case "enter", "ctrl+c":
 			return m, tea.Quit
+
+		case "up":
+			if m.realCursor > 0 {
+				m.cursor--
+				m.realCursor--
+
+				if m.realCursor == start-1 {
+					m.paginator.PrevPage()
+					m.cursor = m.paginator.PerPage - 1
+				}
+
+			}
+
+		case "down":
+			if m.realCursor < len(m.items)-1 {
+				m.realCursor++
+				m.cursor++
+
+				if m.realCursor == end && !m.paginator.OnLastPage() {
+					m.paginator.NextPage()
+					m.cursor = 0
+				}
+			}
+
+		case "left", "h":
+			if m.paginator.Page != 0 {
+				m.realCursor = (m.paginator.Page - 1) * m.paginator.PerPage
+				m.cursor = 0
+			}
+
+		case "right", "l":
+			if !m.paginator.OnLastPage() {
+				m.realCursor = (m.paginator.Page + 1) * m.paginator.PerPage
+				m.cursor = 0
+			}
 
 		case " ":
-			i, ok := m.list.SelectedItem().(Item)
+			v, ok := m.choises[m.realCursor]
 			if ok {
-				m.choice = string(i)
+				delete(m.choises, m.realCursor)
+			} else {
+				m.choises[m.realCursor] = v
 			}
-			return m, tea.Quit
+
 		}
+
 	}
 
-	var cmd tea.Cmd
-	m.list, cmd = m.list.Update(msg)
+	m.paginator, cmd = m.paginator.Update(msg)
 	return m, cmd
 }
 
 func (m model) View() string {
-	if m.choice != "" {
-		return quitTextStyle.Render(fmt.Sprintf("%s? Sounds good to me.", m.choice))
+	var b strings.Builder
+
+	b.WriteString("\nPaginator Example\n")
+
+	start, end := m.paginator.GetSliceBounds(len(m.items))
+
+	// get index = (page * items_per_page) + index_of_range
+	index := (m.paginator.Page * m.paginator.PerPage)
+
+	for i, item := range m.items[start:end] {
+		cursor := " "
+		if m.cursor == i {
+			cursor = ">"
+		}
+
+		checked := " "
+
+		if _, ok := m.choises[index+i]; ok {
+			checked = "x"
+		}
+
+		str := fmt.Sprintf("%s [%s] %s\n", cursor, checked, item)
+		b.WriteString(str)
 	}
-	if m.quitting {
-		return quitTextStyle.Render("Not hungry? That’s cool.")
-	}
-	return "\n" + m.list.View()
+
+	b.WriteString("\n  " + m.paginator.View())
+	b.WriteString("\n  h/l ←/→ page • enter: next\n")
+	return b.String()
 }
 
-func Checkbox(label string, items []list.Item) {
-	const defaultWidth = 20
+func Checkbox() {
+	p := tea.NewProgram(newModel())
+	m, err := p.Run()
 
-	l := list.New(items, itemDelegate{}, defaultWidth, listHeight)
-	l.Title = label
-	l.SetShowStatusBar(false)
-	l.SetFilteringEnabled(false)
-	l.Styles.Title = titleStyle
-	l.Styles.PaginationStyle = paginationStyle
-	l.Styles.HelpStyle = helpStyle
-
-	m := model{list: l}
-
-	if _, err := tea.NewProgram(m).Run(); err != nil {
-		logrus.Fatalln(err)
+	if err != nil {
+		log.Fatal(err)
 	}
+
+	logrus.Printf("%v", m.(model).choises)
 }
+
+// goBack = (actualPage -1) * itemsperpage
+
+// page = 1, startIndex=4 == (1-1) *4 = 0
+// page = 2, startIndex=8 == (2-1) *4 = 4
+// page = 3, startIndex=12 == (3-1) *4 = 8
+// page = 4, startIndex=16 == (4-1) *4 = 12
+// page = 5, startIndex=20 == (5-1) *4 = 16
+
+// goTo = (actualPage +1) * itemperpage
+
+// page = 0, startIndex=0 == (0+1) *4 = 4
+// page = 1, startIndex=4 == (1+1) *4 = 8
+// page = 2, startIndex=8 == (2+1) *4 = 12
+// page = 3, startIndex=12 == (3+1) *4 = 16
+// page = 4, startIndex=16 == (4+1) *4 = 20
+
+// last page not must works
+// page = 5, startIndex=20 == (5-1) *4 = 16

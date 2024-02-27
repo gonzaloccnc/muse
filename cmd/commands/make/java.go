@@ -4,6 +4,7 @@ import (
 	"bytes"
 	"encoding/json"
 	"muse/utils"
+	"muse/utils/checkbox"
 	"muse/utils/spring"
 	"net/url"
 	"os"
@@ -30,6 +31,8 @@ var JavaCommand = &cobra.Command{
 	Short: "create a project with java template",
 	Long:  "Create a project with java template. Only support for Spring framework",
 	Run: func(cmd *cobra.Command, args []string) {
+
+		checkbox.Checkbox()
 		responseData := utils.Fetch("https://start.spring.io/metadata/client")
 
 		var metadata spring.ResponseMetadata
@@ -61,11 +64,6 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	bootVersions := getSpringVersions(metadata.BootVersion.Values)
 	javaVersions := getSpringVersions(metadata.JavaVersion.Values)
 	projects := getTypeDepencies(metadata.Dependencies.Values)
-
-	// checkbox.Checkbox("Select the dependecies manager", []list.Item{
-	// 	checkbox.Item("Hlo"),
-	// 	checkbox.Item("exit"),
-	// })
 
 	manager := mapType[selectOne("Select the dependecies manager", dependenciesManager)]
 	language := selectOne("Select the dependecies manager", languages)
