@@ -3,7 +3,6 @@ package textinput
 import (
 	"errors"
 	"fmt"
-	"log"
 
 	ti "github.com/charmbracelet/bubbles/textinput"
 	tea "github.com/charmbracelet/bubbletea"
@@ -12,7 +11,7 @@ import (
 
 var boldStyle = lipgloss.NewStyle().Bold(true)
 
-func Run(placeholder string, label string) string {
+func Run(placeholder string, label string) (string, error) {
 	ti := ti.New()
 	ti.Prompt = boldStyle.Render("... ")
 	ti.Placeholder = placeholder
@@ -34,11 +33,18 @@ func Run(placeholder string, label string) string {
 
 	p := tea.NewProgram(m)
 	mp, err := p.Run()
+
 	if err != nil {
-		log.Fatal(err)
+		return "", err
 	}
 
-	return mp.(model).textInput.Value()
+	mf := mp.(model)
+
+	if mf.err != nil {
+		return "", mf.err
+	}
+
+	return mf.textInput.Value(), nil
 }
 
 type (
@@ -63,8 +69,8 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.Type {
-		case tea.KeyCtrlC:
-			// return an error
+		case tea.KeyCtrlC, tea.KeyEsc:
+			m.err = errors.New("user aborted prompt")
 			return m, tea.Quit
 
 		case tea.KeyEnter:
@@ -95,9 +101,9 @@ func (m model) View() string {
 	}
 
 	return fmt.Sprintf(
-		"%s: %s %s\n",
+		"\n%s: %s %s\n",
 		m.label,
 		m.textInput.View(),
 		iconIsValid,
-	) + "\n"
+	)
 }

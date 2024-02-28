@@ -1,8 +1,8 @@
 package multiselect
 
 import (
+	"errors"
 	"fmt"
-	"log"
 	"strings"
 
 	"github.com/charmbracelet/bubbles/paginator"
@@ -13,7 +13,6 @@ import (
 
 var (
 	titleStyle = lipgloss.NewStyle().
-			SetString(fmt.Sprintln()).
 			Bold(true)
 
 	itemStyle = lipgloss.NewStyle().
@@ -33,6 +32,7 @@ type model struct {
 	paginator  paginator.Model
 	cursor     int
 	realCursor int
+	err        error
 }
 
 func (m model) Init() tea.Cmd {
@@ -46,7 +46,11 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 	switch msg := msg.(type) {
 	case tea.KeyMsg:
 		switch msg.String() {
-		case "enter", "ctrl+c":
+		case "ctrl+c", "esc":
+			m.err = errors.New("user aborted prompt")
+			return m, tea.Quit
+
+		case "enter":
 			return m, tea.Quit
 
 		case "up":
@@ -103,7 +107,7 @@ func (m model) Update(msg tea.Msg) (tea.Model, tea.Cmd) {
 func (m model) View() string {
 	var b strings.Builder
 
-	b.WriteString(m.label + ": " + "\n\n")
+	b.WriteString("\n" + m.label + ": " + "\n\n")
 
 	start, end := m.paginator.GetSliceBounds(len(m.items))
 
@@ -131,18 +135,27 @@ func (m model) View() string {
 	}
 
 	b.WriteString("\n  " + m.paginator.View())
-	b.WriteString("\n  " + titleStyle.Render("⇡/⇣ ←/→ page • enter: next") + "\n")
+
+	if m.paginator.TotalPages != 1 {
+		b.WriteString("\n  " + titleStyle.Render("⇡/⇣ ←/→ page • enter: next") + "\n")
+	}
+
 	return b.String()
 }
 
-func Run(label string, items []string, perPage int) []string {
+func Run(label string, items []string, perPage int) ([]string, error) {
 	p := paginator.New()
 	p.Type = paginator.Dots
-
 	p.PerPage = perPage
-	p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("●")
-	p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("◌")
 	p.SetTotalPages(len(items))
+
+	if p.TotalPages != 1 {
+		p.ActiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "235", Dark: "252"}).Render("●")
+		p.InactiveDot = lipgloss.NewStyle().Foreground(lipgloss.AdaptiveColor{Light: "250", Dark: "238"}).Render("◌")
+	} else {
+		p.ActiveDot = ""
+		p.InactiveDot = ""
+	}
 
 	mo := model{
 		paginator: p,
@@ -155,18 +168,24 @@ func Run(label string, items []string, perPage int) []string {
 	m, err := pgm.Run()
 
 	if err != nil {
-		log.Fatal(err)
+		return nil, err
 	}
 
-	mChoices := m.(model).choices
+	mf := m.(model)
+
+	if mf.err != nil {
+		return nil, mf.err
+	}
+
+	mChoices := mf.choices
 
 	choices := make([]string, len(mChoices))
 
 	idx := 0
-	for _, v := range choices {
+	for _, v := range mChoices {
 		choices[idx] = v
 		idx++
 	}
 
-	return choices
+	return choices, nil
 }

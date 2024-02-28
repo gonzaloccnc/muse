@@ -7,7 +7,7 @@
   * js *// not implement yet*
   * ts *// not implement yet*
   * py *// not implement yet*
-  * java *// not implement yet*
+  * java
   * go *// not implement yet*
 * version
 
@@ -35,15 +35,20 @@
 - [x] Create subcommands for javascript, typescript, java, python, and go.
 - [x] Java command will only be available using spring boot. Create the structure according to the data provided
 - [ ] JavaScript and TypeScript will only be available for frontend with vite.
-- [ ] Go in progress - !NOT DEFINED¡
-- [ ] Python command will only be available with venv environment. And implemented
-- [ ] Create a directory based on inputs
+- [ ] Go create projects with framework like Fibber, Gin, etc.
+- [ ] Python command will only be available with *venv environment*. And implemented
+- [x] Create a directory based on inputs
 
 ### List 
 
 - [x] Make command for list
+- [ ] Make an list with bubbles
 - [x] Create flag template to list available templates
+- [ ] Add list of commons dependencies for java spring boot
 
+### Persistent
+
+- [ ] save the project data for simplify the creation of the subsequent projects
 
 *CATCH ERRORS ON ALL COMMANDS*
 

@@ -60,20 +60,20 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	dependenciesManager := []string{"Gradle - Groovy", "Gradle - Kotlin", "Maven"}
 	languages := []string{"Java", "Kotlin", "Groovy"}
 	packagings := []string{"jar", "war"}
-	bootVersions := getSpringVersions(metadata.BootVersion.Values)
-	javaVersions := getSpringVersions(metadata.JavaVersion.Values)
+	bootVersions, bootVersionsMap := getSpringVersions(metadata.BootVersion.Values)
+	javaVersions, _ := getSpringVersions(metadata.JavaVersion.Values)
 	projects := getTypeDependencies(metadata.Dependencies.Values)
 
 	manager := mapType[selectOne("Select the dependencies manager", dependenciesManager)]
 	language := selectOne("Select the dependencies manager", languages)
 	bootVersion := selectOne("Select the dependencies manager", bootVersions)
-	groupId := input("Group Id: ...", "com.example")
-	artifactId := input("Artifact Id: ...", "demo")
-	name := input("Name: ...", artifactId)
-	description := input("Description: ...", "Demo project for Spring Boot")
-	packageName := input("Package name: ...", groupId+"."+artifactId)
+	groupId := input("Group Id", "com.example")
+	artifactId := input("Artifact Id", "demo")
+	name := input("Name", artifactId)
+	description := input("Description", "Demo project for Spring Boot")
+	packageName := input("Package name", groupId+"."+artifactId)
 	packaging := selectOne("Packaging", packagings)
-	javaVersion := selectOne("Java version: ...", javaVersions)
+	javaVersion := selectOne("Java versions", javaVersions)
 
 	dependencies := chooseDependencies(projects, metadata.Dependencies.Values)
 
@@ -82,7 +82,7 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	return spring.QueryString{
 		Type:         manager,
 		Language:     language,
-		BootVersion:  bootVersion,
+		BootVersion:  bootVersionsMap[bootVersion],
 		GroupId:      groupId,
 		ArtifactId:   artifactId,
 		Name:         name,
@@ -94,25 +94,46 @@ func springInitializr(metadata spring.ResponseMetadata) spring.QueryString {
 	}
 }
 
-func choices(label string, opts []string) []string {
-	return multiselect.Run(label, opts, 6)
+func checkboxes(label string, opts []string) []string {
+	choices, err := multiselect.Run(label, opts, 6)
+
+	if err != nil {
+		logrus.Fatalln(err)
+	}
+
+	return choices
 }
 
 func selectOne(label string, opts []string) string {
-	return singleselect.Run(label, opts, 6)
+	choice, err := singleselect.Run(label, opts, 6)
+
+	if err != nil {
+		logrus.Fatalln(err)
+	}
+
+	return choice
 }
 
 func input(label string, placeholder string) string {
-	return ti.Run(placeholder, label)
+	value, err := ti.Run(placeholder, label)
+
+	if err != nil {
+		logrus.Fatalln(err)
+	}
+
+	return value
 }
 
-func getSpringVersions(structs []spring.BootVersionValue) []string {
+func getSpringVersions(structs []spring.BootVersionValue) ([]string, map[string]string) {
 	strings := make([]string, len(structs))
+	mapVersion := make(map[string]string)
+
 	for i, v := range structs {
+		mapVersion[v.Name] = v.ID
 		strings[i] = v.Name
 	}
 
-	return strings
+	return strings, mapVersion
 }
 
 func getTypeDependencies(root []spring.DependenciesValue) []string {
@@ -158,7 +179,7 @@ func chooseDependencies(projects []string, projectsMetadata []spring.Dependencie
 			if v.Name == project {
 				dependencies = append(
 					dependencies,
-					choices("Select dependency", getDependencies(v.Values))...,
+					checkboxes("Select dependency", getDependencies(v.Values))...,
 				)
 			}
 		}
