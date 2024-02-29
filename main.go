@@ -1,6 +1,8 @@
 package main
 
-import "muse/cmd"
+import (
+	"muse/cmd"
+)
 
 func main() {
 	cmd.Execute()

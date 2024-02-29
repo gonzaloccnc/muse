@@ -1,1 +1,4 @@
 db.json
+/target
+**/*.zip
+.idea

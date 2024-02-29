@@ -25,8 +25,12 @@ var ConfigCmd = &cobra.Command{
 		alias := args[0]
 		path := args[1]
 
+		if !utils.ValidateAlias(alias) {
+			logrus.Fatalln("You should send an valid alias that is between 2 to 10 chars")
+		}
+
 		if !utils.ValidatePath(path) {
-			logrus.Fatalln("You must send a valid path in absolute or relative")
+			logrus.Fatalln("You should send a valid path in absolute or relative")
 		}
 
 		p, err := filepath.Abs(path)
@@ -39,5 +43,8 @@ var ConfigCmd = &cobra.Command{
 			Alias: alias,
 			Path:  p,
 		})
+
+		logrus.Infoln("Alias: ", alias)
+		logrus.Infoln("Path: ", p)
 	},
 }

@@ -18,13 +18,15 @@ var rootCmd = &cobra.Command{
 
 func init() {
 	logrus.SetFormatter(&logrus.TextFormatter{
-		DisableTimestamp: true,
-		ForceColors:      true,
+		DisableTimestamp:       true,
+		ForceColors:            true,
+		DisableLevelTruncation: true,
 	})
 
 	rootCmd.AddCommand(cm.VersionCmd)
-	rootCmd.AddCommand(cm.MakeCmd)
 	rootCmd.AddCommand(cm.ConfigCmd)
+	rootCmd.AddCommand(cm.MakeCmd)
+	rootCmd.AddCommand(cm.ListCmd)
 }
 
 func Execute() {

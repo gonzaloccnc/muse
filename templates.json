@@ -1,9 +1,8 @@
 {
   "templates": {
     "typescript": [],
-    "javasript": [],
+    "javascript": [],
     "python": [],
-    "java": [],
     "go": []
   }
 }
