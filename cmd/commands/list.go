@@ -1,28 +1,48 @@
 package commands
 
 import (
+	"fmt"
+	ck "muse/cmd/commands/make"
+
+	"github.com/charmbracelet/lipgloss"
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
 )
 
-var template bool
+var templateStyle = lipgloss.NewStyle().
+	Bold(true).
+	Margin(1).
+	Foreground(lipgloss.Color("#8934eb")).
+	BorderLeft(true).
+	BorderForeground(lipgloss.Color("#8934eb")).
+	BorderStyle(lipgloss.NormalBorder())
 
 var ListCmd = &cobra.Command{
-	Use:   "list",
+	Use:   "list [language_abbr]",
 	Short: "list according of the flag provided",
 	Run: func(cmd *cobra.Command, args []string) {
-		// now only template is available becase ->
 
-		if cmd.Flags().NFlag() == 0 {
-			logrus.Fatalln("you nedd provide some flag:")
+		if len(args) == 0 {
+			cmd.Help()
+			return
 		}
 
-		// listing templates
-
-		logrus.Infoln("listing tempaltes:")
+		getViteTemplates()
 	},
 }
 
-func init() {
-	ListCmd.Flags().BoolVarP(&template, "tempalte", "t", false, "list all project templates availables")
+func getViteTemplates() {
+	i := 1
+	logrus.Infoln("listing vite templates:")
+
+	for k := range ck.ViteTemplates {
+		f := templateStyle.Render(fmt.Sprintf(" %d. %s", i, k))
+
+		fmt.Println(f)
+		i++
+	}
+}
+
+func GetBackJsTemplates() {
+
 }

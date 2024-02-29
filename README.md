@@ -4,8 +4,8 @@
 
 * config
 * make
-  * js *// not implement yet*
-  * ts *// not implement yet*
+  * js *only vite*
+  * ts *only vite*
   * py *// not implement yet*
   * java
   * go *// not implement yet*
@@ -34,15 +34,15 @@
 - [x] Validate the flag name only must contains letters and underscores
 - [x] Create subcommands for javascript, typescript, java, python, and go.
 - [x] Java command will only be available using spring boot. Create the structure according to the data provided
-- [ ] JavaScript and TypeScript will only be available for frontend with vite.
+- [x] JavaScript and TypeScript will only be available for frontend with vite.
 - [ ] Go create projects with framework like Fibber, Gin, etc.
 - [ ] Python command will only be available with *venv environment*. And implemented
 - [x] Create a directory based on inputs
+- [x] When create directory, warn the user about the existence of the directory
 
 ### List 
 
 - [x] Make command for list
-- [ ] Make an list with bubbles
 - [x] Create flag template to list available templates
 - [ ] Add list of commons dependencies for java spring boot
 

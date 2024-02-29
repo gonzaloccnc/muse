@@ -1,15 +1,20 @@
 package utils
 
 import (
+	"bufio"
 	"fmt"
 	"io"
 	"net/http"
 	"os"
 	"path/filepath"
 	"regexp"
+	"strings"
 
+	"github.com/charmbracelet/lipgloss"
 	"github.com/sirupsen/logrus"
 )
+
+var yesOrNoStyle = lipgloss.NewStyle().Bold(true)
 
 func Todo(msg string) {
 	logrus.Fatalf("TODO!: %s\n", msg)
@@ -72,4 +77,26 @@ func CreateDir(path string) string {
 	}
 
 	return ""
+}
+
+func YesOrNo(label string) bool {
+	reader := bufio.NewReader(os.Stdin)
+	fmt.Println(yesOrNoStyle.Render(label))
+	fmt.Print(yesOrNoStyle.Render("Do you want to continue? (yes/no): ... "))
+	answer, _ := reader.ReadString('\n')
+	answer = strings.TrimSpace(strings.ToLower(answer))
+
+	if answer == "yes" || answer == "y" {
+		return true
+	} else if answer == "no" || answer == "n" {
+		return false
+	} else {
+		return false
+	}
+}
+
+func RemoveDir(path string) {
+	if err := os.RemoveAll(path); err != nil {
+		logrus.Fatalln(err)
+	}
 }
