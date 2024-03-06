@@ -15,8 +15,6 @@ var ConfigCmd = &cobra.Command{
 	Short: "Set up your context with a shortcut to create quick projects",
 	Long:  "Set up aliases for quick project creation: config alias path and create projects with make -a alias. Example: config \"js\" \"/projects/javascript\" then make -a js",
 	Run: func(cmd *cobra.Command, args []string) {
-		db.CreateDB()
-
 		if len(args) < 2 {
 			logrus.Warnln("You need provide two args for this command. use --help for more information")
 			os.Exit(1)

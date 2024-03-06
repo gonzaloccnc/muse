@@ -10,6 +10,6 @@ var VersionCmd = &cobra.Command{
 	Short: "See the version number",
 	Run: func(cmd *cobra.Command, args []string) {
 		// call an api for get latest version
-		logrus.Println("v0.1.0beta HEAD")
+		logrus.Println("v0.1.1beta HEAD")
 	},
 }

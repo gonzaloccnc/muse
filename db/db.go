@@ -5,11 +5,15 @@ import (
 	"fmt"
 	"muse/utils"
 	"os"
+	"path/filepath"
 
 	"github.com/sirupsen/logrus"
 )
 
 var DB = "db.json"
+var homedir = utils.GetHomeDir("/.muse/db")
+var dbPath = filepath.Join(homedir, "/.muse/db")
+var jsonFile = filepath.Join(dbPath, DB)
 
 type ItemJSON struct {
 	Id    string `json:"id"`
@@ -32,7 +36,7 @@ func CreateDB() {
 }
 
 func InsertItem(item ItemJSON) {
-	aliasesJSON := getJsonFile(DB)
+	aliasesJSON := getJsonFile(jsonFile)
 
 	isDuplicated := isDuplicateAlias(item.Alias, aliasesJSON)
 
@@ -74,7 +78,7 @@ func getJsonFile(path string) AliasesJSON {
 }
 
 func GetAlias(alias string) *ItemJSON {
-	jsonFile := getJsonFile(DB)
+	jsonFile := getJsonFile(jsonFile)
 
 	for _, al := range jsonFile.Aliases {
 		if al.Alias == alias {
@@ -102,7 +106,11 @@ func saveInJsonFile(aliases AliasesJSON) {
 		logrus.Fatal(err)
 	}
 
-	if err := os.WriteFile(DB, aliasesJSON, 0644); err != nil {
+	if err := os.MkdirAll(dbPath, 0777); err != nil {
+		logrus.Fatalln(err)
+	}
+
+	if err := os.WriteFile(jsonFile, aliasesJSON, 0644); err != nil {
 		logrus.Fatal(err)
 	}
 }
