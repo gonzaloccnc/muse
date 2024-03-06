@@ -36,7 +36,7 @@ var ViteTemplates = map[string]string{
 var JsCommand = &cobra.Command{
 	Use:   "js [template]",
 	Short: "create a project with js template",
-	Long:  "create a project with js template. Support for Vite for frontend projects. Backend JS coming soon",
+	Long:  "create a project with js template. Support for Vite for frontend projects. Backend JS coming soon. (To see list template use muse list)",
 	Run: func(cmd *cobra.Command, args []string) {
 
 		if len(args) == 0 {

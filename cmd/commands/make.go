@@ -46,7 +46,6 @@ func init() {
 	MakeCmd.AddCommand(ck.JavaCommand)
 	MakeCmd.AddCommand(ck.JsCommand)
 	MakeCmd.AddCommand(ck.PyCommand)
-	MakeCmd.AddCommand(ck.TsCommand)
 	MakeCmd.PersistentFlags().StringVarP(&ck.Alias, "alias", "a", "", "use this instead absolute or relative path with (--output, -o)")
 	MakeCmd.PersistentFlags().StringVarP(&ck.Output, "output", "o", homeDir, "output where your project will be located")
 	MakeCmd.PersistentFlags().StringVarP(&ck.Name, "name", "n", "", "name of your project dir")
