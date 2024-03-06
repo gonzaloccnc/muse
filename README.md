@@ -17,7 +17,7 @@
 
 - [x] Add root command with subcommands for version, config and make
 
-- [ ] Add functionality for root subcommand called version that displays the version number if its possible that call an api to get version number and displays if is updatable
+- [x] Add functionality for root subcommand called version that displays the version number
 
 ### Config
 

@@ -2,6 +2,7 @@ package cmd
 
 import (
 	cm "muse/cmd/commands"
+	"muse/db"
 
 	"github.com/sirupsen/logrus"
 	"github.com/spf13/cobra"
@@ -30,6 +31,7 @@ func init() {
 }
 
 func Execute() {
+	db.CreateDB()
 	if err := rootCmd.Execute(); err != nil {
 		logrus.Fatal(err)
 	}
