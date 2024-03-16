@@ -13,7 +13,7 @@ import (
 var DB = "db.json"
 var homedir = utils.GetHomeDir("/.muse/db")
 var dbPath = filepath.Join(homedir, "/.muse/db")
-var jsonFile = filepath.Join(dbPath, DB)
+var JsonFile = filepath.Join(dbPath, DB)
 
 type ItemJSON struct {
 	Id    string `json:"id"`
@@ -26,7 +26,7 @@ type AliasesJSON = struct {
 }
 
 func CreateDB() {
-	_, err := os.Stat(DB)
+	_, err := os.Stat(JsonFile)
 
 	if err == nil {
 		return
@@ -36,7 +36,7 @@ func CreateDB() {
 }
 
 func InsertItem(item ItemJSON) {
-	aliasesJSON := getJsonFile(jsonFile)
+	aliasesJSON := GetJsonFile(JsonFile)
 
 	isDuplicated := isDuplicateAlias(item.Alias, aliasesJSON)
 
@@ -61,7 +61,7 @@ func UpdateItem(alias string, item ItemJSON) {
 	utils.Todo("update item")
 }
 
-func getJsonFile(path string) AliasesJSON {
+func GetJsonFile(path string) AliasesJSON {
 	var aliasesJSON AliasesJSON
 
 	jsonBytes, err := os.ReadFile(path)
@@ -78,7 +78,7 @@ func getJsonFile(path string) AliasesJSON {
 }
 
 func GetAlias(alias string) *ItemJSON {
-	jsonFile := getJsonFile(jsonFile)
+	jsonFile := GetJsonFile(JsonFile)
 
 	for _, al := range jsonFile.Aliases {
 		if al.Alias == alias {
@@ -110,7 +110,7 @@ func saveInJsonFile(aliases AliasesJSON) {
 		logrus.Fatalln(err)
 	}
 
-	if err := os.WriteFile(jsonFile, aliasesJSON, 0644); err != nil {
+	if err := os.WriteFile(JsonFile, aliasesJSON, 0644); err != nil {
 		logrus.Fatal(err)
 	}
 }
