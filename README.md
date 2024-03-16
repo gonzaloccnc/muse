@@ -4,8 +4,7 @@
 
 * config
 * make
-  * js *only vite*
-  * ts *only vite*
+  * js/ts *only vite*
   * py *// not implement yet*
   * java
   * go *// not implement yet*

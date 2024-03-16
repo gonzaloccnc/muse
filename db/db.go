@@ -26,7 +26,7 @@ type AliasesJSON = struct {
 }
 
 func CreateDB() {
-	_, err := os.Stat(DB)
+	_, err := os.Stat(jsonFile)
 
 	if err == nil {
 		return
